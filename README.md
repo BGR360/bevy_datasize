@@ -1,10 +1,12 @@
 # bevy_datasize
 
+[![Tests](https://github.com/bgr360/bevy_datasize/actions/workflows/tests.yml/badge.svg)](https://github.com/bgr360/bevy_datasize/actions/workflows/tests.yml)
+
 This is a library for tracking memory usage in [Bevy](https://lib.rs/bevy) apps.
 
 It is based on the [`datasize`](https://lib.rs/datasize) crate.
 
-# Example
+## Example
 
 ```rust,no_run
 use bevy::prelude::*;
@@ -36,6 +38,11 @@ fn print_datasize(memory_usage: Res<MemoryUsage>) {
     println!("MyComponent total heap usage: {total_heap_bytes} bytes");
 }
 ```
+
+## Docs
+
+Rustdocs for the main branch can be found
+[here](https://bgr360.github.io/bevy_datasize/bevy_datasize/)
 
 ## License
 
