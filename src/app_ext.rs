@@ -3,9 +3,15 @@ use std::any::Any;
 use bevy::app::App;
 use bevy::ecs::component::Component;
 
-use crate::{systems::update_datasize_for_component, DataSize, MemoryUsage};
+use crate::{systems::update_stats_for_component, DataSize, MemoryUsage};
 
+/// [`App`] extension methods to register types for memory usage tracking.
 pub trait RegisterSizedTypes {
+    /// Registers the given [`Component`] type with the
+    /// [`MemoryUsagePlugin`][crate::MemoryUsagePlugin].
+    ///
+    /// The given type `T` will be available to query on the [`MemoryUsage`]
+    /// resource.
     fn register_sized_component<T>(&mut self) -> &mut Self
     where
         T: Any + Component + DataSize;
@@ -22,7 +28,7 @@ impl RegisterSizedTypes for App {
 
         memory_usage.register_type::<T>();
 
-        self.add_system(update_datasize_for_component::<T>);
+        self.add_system(update_stats_for_component::<T>);
 
         self
     }

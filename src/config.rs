@@ -1,12 +1,12 @@
+/// Configuration for the [`MemoryUsagePlugin`][crate::MemoryUsagePlugin].
 #[derive(Debug)]
 pub struct MemoryConfig {
-    pub tracking_enabled: bool,
+    /// Whether to track memory usage for all registered types.
+    pub global: bool,
 }
 
 impl Default for MemoryConfig {
     fn default() -> Self {
-        Self {
-            tracking_enabled: true,
-        }
+        Self { global: true }
     }
 }

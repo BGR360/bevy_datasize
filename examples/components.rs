@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+
 use bevy_datasize::{DataSize, MemoryUsage, MemoryUsagePlugin, RegisterSizedTypes};
 
 #[derive(Component, DataSize)]
@@ -24,7 +25,7 @@ fn spawn_entities(mut commands: Commands) {
 }
 
 fn print_size(memory_usage: Res<MemoryUsage>) {
-    let bytes = memory_usage.get_usage::<MyComponent>().unwrap();
+    let stats = memory_usage.get_stats::<MyComponent>().unwrap();
 
-    println!("Memory usage: {} bytes", bytes);
+    println!("Memory usage: {:#?}", stats);
 }

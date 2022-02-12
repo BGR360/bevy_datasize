@@ -2,6 +2,9 @@ use bevy::app::Plugin;
 
 use crate::{MemoryConfig, MemoryUsage};
 
+/// Adds memory usage tracking to Apps.
+///
+/// You can configure this plugin using the [`MemoryConfig`] resource.
 pub struct MemoryUsagePlugin;
 
 impl Plugin for MemoryUsagePlugin {
