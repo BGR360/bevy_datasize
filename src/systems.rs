@@ -12,7 +12,7 @@ use crate::{MemoryConfig, MemoryStats, MemoryUsage};
 pub fn update_stats_for_component<T>(
     query: Query<&T>,
     memory_config: Res<MemoryConfig>,
-    mut memory_usage: ResMut<MemoryUsage>,
+    memory_usage: Res<MemoryUsage>,
 ) where
     T: Any + Component + DataSize,
 {
@@ -22,5 +22,5 @@ pub fn update_stats_for_component<T>(
 
     let stats = MemoryStats::from_values(query.iter());
 
-    memory_usage.update_stats::<T>(stats);
+    memory_usage.update_stats_fast::<T>(stats);
 }

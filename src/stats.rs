@@ -1,4 +1,7 @@
-use std::any::Any;
+use std::{
+    any::Any,
+    sync::atomic::{AtomicUsize, Ordering},
+};
 
 use crate::DataSize;
 
@@ -105,5 +108,40 @@ impl MemoryStats {
         T: Any + DataSize,
     {
         Self::stack_size_of(value) + Self::heap_size_of(value)
+    }
+}
+
+#[derive(Debug, Default)]
+pub(crate) struct MemoryStatsInternal {
+    count: AtomicUsize,
+    total_stack_bytes: AtomicUsize,
+    total_heap_bytes: AtomicUsize,
+}
+
+impl MemoryStatsInternal {
+    pub(crate) fn get(&self) -> MemoryStats {
+        MemoryStats {
+            count: self.count.load(Ordering::Relaxed),
+            total_stack_bytes: self.total_stack_bytes.load(Ordering::Relaxed),
+            total_heap_bytes: self.total_heap_bytes.load(Ordering::Relaxed),
+        }
+    }
+
+    pub(crate) fn set(&self, stats: MemoryStats) {
+        self.count.store(stats.count, Ordering::Relaxed);
+        self.total_stack_bytes
+            .store(stats.total_stack_bytes, Ordering::Relaxed);
+        self.total_heap_bytes
+            .store(stats.total_heap_bytes, Ordering::Relaxed);
+    }
+}
+
+impl From<MemoryStats> for MemoryStatsInternal {
+    fn from(stats: MemoryStats) -> Self {
+        Self {
+            count: AtomicUsize::new(stats.count),
+            total_stack_bytes: AtomicUsize::new(stats.total_stack_bytes),
+            total_heap_bytes: AtomicUsize::new(stats.total_heap_bytes),
+        }
     }
 }
