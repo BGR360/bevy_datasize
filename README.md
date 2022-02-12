@@ -2,9 +2,23 @@
 
 [![Tests](https://github.com/bgr360/bevy_datasize/actions/workflows/tests.yml/badge.svg)](https://github.com/bgr360/bevy_datasize/actions/workflows/tests.yml)
 
-This is a library for tracking memory usage in [Bevy](https://lib.rs/bevy) apps.
+`bevy_datasize` is a library for tracking memory usage in
+[Bevy](https://lib.rs/bevy) apps.
 
-It is based on the [`datasize`](https://lib.rs/datasize) crate.
+`bevy_datasize` uses the `DataSize` trait from the [`datasize`] crate to
+estimate the runtime memory usage of any components, resources, or assets that
+are registered with the `MemoryUsagePlugin`.
+
+The `DataSize` trait can be derived for your own custom types, and you can
+inject custom estimators for third party types that do not implement `DataSize`.
+See the [`datasize`] docs for more info on that.
+
+[`datasize`]: https://docs.rs/datasize
+
+## Docs
+
+Rustdocs for the main branch can be found
+[here](https://bgr360.github.io/bevy_datasize/bevy_datasize/)
 
 ## Example
 
@@ -38,11 +52,6 @@ fn print_datasize(memory_usage: Res<MemoryUsage>) {
     println!("MyComponent total heap usage: {total_heap_bytes} bytes");
 }
 ```
-
-## Docs
-
-Rustdocs for the main branch can be found
-[here](https://bgr360.github.io/bevy_datasize/bevy_datasize/)
 
 ## License
 
