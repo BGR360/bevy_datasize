@@ -20,6 +20,9 @@ jobs:
           profile: minimal
           override: true
 
+      - name: Install alsa and udev
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+
       - name: Build documentation
         run: cargo doc -p bevy_datasize -p datasize --no-deps
 
