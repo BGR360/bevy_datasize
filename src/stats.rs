@@ -3,7 +3,7 @@ use std::{
     sync::atomic::{AtomicUsize, Ordering},
 };
 
-use crate::DataSize;
+use crate::{DataSize, DataSizeEstimator};
 
 /// Memory usage statistics for a single data type.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
@@ -40,10 +40,21 @@ impl MemoryStats {
     where
         T: Any + DataSize,
     {
+        Self::from_value_with_estimator::<T, T>(value)
+    }
+
+    /// Returns the computed memory statistics for a single value using a
+    /// specific [`DataSizeEstimator`].
+    #[inline]
+    pub fn from_value_with_estimator<T, E>(value: &T) -> Self
+    where
+        T: Any,
+        E: DataSizeEstimator<T>,
+    {
         Self {
             count: 1,
             total_stack_bytes: Self::stack_size_of(value),
-            total_heap_bytes: Self::heap_size_of(value),
+            total_heap_bytes: Self::heap_size_of_with_estimator::<T, E>(value),
         }
     }
 
@@ -54,6 +65,17 @@ impl MemoryStats {
         T: Any + DataSize,
         I: IntoIterator<Item = &'a T>,
     {
+        Self::from_values_with_estimator::<T, T, I>(values)
+    }
+
+    /// Returns the computed memory statistics for a collection of values.
+    #[inline]
+    pub fn from_values_with_estimator<'a, T, E, I>(values: I) -> Self
+    where
+        T: Any,
+        E: DataSizeEstimator<T>,
+        I: IntoIterator<Item = &'a T>,
+    {
         let mut count = 0;
         let mut total_stack_bytes = 0;
         let mut total_heap_bytes = 0;
@@ -61,7 +83,7 @@ impl MemoryStats {
         for value in values.into_iter() {
             count += 1;
             total_stack_bytes += Self::stack_size_of(value);
-            total_heap_bytes += Self::heap_size_of(value);
+            total_heap_bytes += Self::heap_size_of_with_estimator::<T, E>(value);
         }
 
         Self {
@@ -94,20 +116,17 @@ impl MemoryStats {
     where
         T: DataSize,
     {
-        value.estimate_heap_size()
+        Self::heap_size_of_with_estimator::<T, T>(value)
     }
 
-    /// Returns the estimated total size of the given value.
-    ///
-    /// This quantity is the sum of [`stack_size_of`] and [`heap_size_of`].
-    ///
-    /// [`stack_size_of`]: Self::stack_size_of
-    /// [`heap_size_of`]: Self::heap_size_of
-    pub fn total_size_of<T>(value: &T) -> usize
+    /// Returns the estimated heap size of the given value using a specific
+    /// [`DataSizeEstimator`].
+    #[inline]
+    pub fn heap_size_of_with_estimator<T, E>(value: &T) -> usize
     where
-        T: Any + DataSize,
+        E: DataSizeEstimator<T>,
     {
-        Self::stack_size_of(value) + Self::heap_size_of(value)
+        <E as DataSizeEstimator<T>>::estimate_heap_size(value)
     }
 }
 
