@@ -22,3 +22,6 @@ jobs:
 
       - name: Run unit tests and doctests
         run: cargo test
+
+      - name: Compile examples
+        run: cargo build --examples
