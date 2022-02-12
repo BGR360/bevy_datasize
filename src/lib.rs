@@ -39,6 +39,8 @@
 
 #![warn(missing_docs)]
 
+pub use datasize;
+
 pub use datasize::DataSize;
 
 mod app_ext;

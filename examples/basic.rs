@@ -1,7 +1,7 @@
 //! This example shows how to register your own resource, component, and asset
 //! types for memory usage tracking.
 
-use bevy::{prelude::*, reflect::TypeUuid};
+use bevy::{asset::AssetPlugin, prelude::*, reflect::TypeUuid};
 use bevy_datasize::prelude::*;
 
 #[derive(DataSize)]
@@ -14,7 +14,7 @@ struct MyComponent {
     pub data: Vec<u8>,
 }
 
-#[derive(Debug, TypeUuid)]
+#[derive(DataSize, TypeUuid)]
 #[uuid = "0669d1a3-34b5-4bac-b9cd-26a2e2df79ff"]
 pub struct MyAsset {
     pub data: Vec<u8>,
@@ -23,12 +23,15 @@ pub struct MyAsset {
 fn main() {
     App::new()
         .add_plugins(MinimalPlugins)
-        .add_plugin(MemoryUsagePlugin)
-        .register_sized_resource::<MyResource>()
-        .register_sized_component::<MyComponent>()
+        .add_plugin(AssetPlugin)
+        .add_asset::<MyAsset>()
         .insert_resource(MyResource {
             data: vec![42; 4096],
         })
+        .add_plugin(MemoryUsagePlugin)
+        .register_sized_resource::<MyResource>()
+        .register_sized_component::<MyComponent>()
+        .register_sized_asset::<MyAsset>()
         .add_startup_system(spawn_entities)
         .add_startup_system(add_asset)
         .add_system(print_sizes)
