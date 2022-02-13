@@ -50,7 +50,7 @@ pub use datasize::DataSize;
 mod app_ext;
 pub mod builtins;
 mod config;
-mod estimator;
+pub mod estimator;
 mod plugin;
 mod resource;
 mod stats;
@@ -58,6 +58,7 @@ pub mod systems;
 
 pub use app_ext::RegisterSizedTypes;
 pub use config::MemoryConfig;
+#[doc(inline)]
 pub use estimator::DataSizeEstimator;
 pub use plugin::MemoryUsagePlugin;
 pub use resource::MemoryUsage;

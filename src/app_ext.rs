@@ -20,7 +20,7 @@ pub trait RegisterSizedTypes {
         T: Any + DataSize + Component,
     {
         self.register_sized_type::<T, _, _>(
-            systems::update_stats_for_component::<T, ForwardingEstimator<T>>,
+            systems::update_stats_for_component::<T, ForwardingEstimator>,
         )
     }
 
@@ -34,7 +34,7 @@ pub trait RegisterSizedTypes {
         T: Any + DataSize + Resource,
     {
         self.register_sized_type::<T, _, _>(
-            systems::update_stats_for_resource::<T, ForwardingEstimator<T>>,
+            systems::update_stats_for_resource::<T, ForwardingEstimator>,
         )
     }
 
@@ -48,7 +48,7 @@ pub trait RegisterSizedTypes {
         T: Any + DataSize + Asset,
     {
         self.register_sized_type::<T, _, _>(
-            systems::update_stats_for_asset::<T, ForwardingEstimator<T>>,
+            systems::update_stats_for_asset::<T, ForwardingEstimator>,
         )
     }
 

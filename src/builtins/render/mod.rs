@@ -1,6 +1,6 @@
 //! Support for Bevy render resources.
 
-use bevy::app::{PluginGroup, PluginGroupBuilder};
+use bevy::app::{App, Plugin};
 
 #[cfg(feature = "image")]
 mod image;
@@ -14,14 +14,14 @@ pub use mesh::MeshMemoryUsagePlugin;
 
 /// Adds memory tracking for the components, resources, and assets that are part
 /// of Bevy's [`RenderPlugin`][bevy::render::RenderPlugin].
-pub struct RenderMemoryUsagePlugins;
+pub struct RenderMemoryUsagePlugin;
 
-impl PluginGroup for RenderMemoryUsagePlugins {
-    fn build(&mut self, group: &mut PluginGroupBuilder) {
+impl Plugin for RenderMemoryUsagePlugin {
+    fn build(&self, app: &mut App) {
         #[cfg(feature = "image")]
-        group.add(ImageMemoryUsagePlugin);
+        app.add_plugin(ImageMemoryUsagePlugin);
 
         #[cfg(feature = "mesh")]
-        group.add(MeshMemoryUsagePlugin);
+        app.add_plugin(MeshMemoryUsagePlugin);
     }
 }
