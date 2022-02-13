@@ -1,8 +1,11 @@
 use std::{
     any::Any,
+    fmt,
     ops::{Add, Mul},
     sync::atomic::{AtomicUsize, Ordering},
 };
+
+use bytesize::ByteSize;
 
 use crate::{estimator::ForwardingEstimator, DataSize, DataSizeEstimator};
 
@@ -187,6 +190,17 @@ impl Mul<usize> for MemoryStats {
             total_stack_bytes: self.total_stack_bytes * rhs,
             total_heap_bytes: self.total_heap_bytes * rhs,
         }
+    }
+}
+
+impl fmt::Display for MemoryStats {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let count = self.count;
+        // let total_stack_bytes = ByteSize(self.total_stack_bytes as u64);
+        // let total_heap_bytes = ByteSize(self.total_heap_bytes as u64);
+        let total_bytes = ByteSize(self.total_bytes() as u64);
+
+        write!(f, "{count} ({total_bytes})")
     }
 }
 

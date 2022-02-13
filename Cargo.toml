@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 bevy = { version = "0.6", default-features = false }
+bytesize = "1"
 datasize = "0.2"
 
 [dev-dependencies]
@@ -17,13 +18,16 @@ default = [
 
 # Enables support for tracking Bevy render resources.
 render = [
-    "mesh",
     "image",
+    "material",
+    "mesh",
 ]
-# Enables support for tracking `Mesh`.
-mesh = ["bevy_render"]
 # Enables support for tracking `Image`.
 image = ["bevy_render"]
+# Enables support for tracking `StandardMaterial`.
+material = ["bevy_pbr"]
+# Enables support for tracking `Mesh`.
+mesh = ["bevy_render"]
 
 # Features required to run all the examples
 examples = [

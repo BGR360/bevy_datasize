@@ -24,16 +24,15 @@ fn setup(
     const WIDTH: usize = 10;
     const HEIGHT: usize = 10;
     let texture = asset_server.load("grass_0_0.png");
-    let material = materials.add(StandardMaterial {
-        base_color_texture: Some(texture),
-        ..Default::default()
-    });
     for x in 0..WIDTH {
         for y in 0..HEIGHT {
             // cube
             commands.spawn_bundle(PbrBundle {
                 mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-                material: material.clone(),
+                material: materials.add(StandardMaterial {
+                    base_color_texture: Some(texture.clone()),
+                    ..Default::default()
+                }),
                 transform: Transform::from_xyz((x as f32) * 2.0, (y as f32) * 2.0, 0.0),
                 ..Default::default()
             });
@@ -50,9 +49,11 @@ fn setup(
 fn print_sizes(memory_usage: Res<MemoryUsage>) {
     let mesh_stats = memory_usage.get_stats::<Mesh>().unwrap();
     let image_stats = memory_usage.get_stats::<Image>().unwrap();
+    let material_stats = memory_usage.get_stats::<StandardMaterial>().unwrap();
 
     println!();
     println!("Memory usage:");
-    println!("Meshes: {:#?}", mesh_stats);
-    println!("Images: {:#?}", image_stats);
+    println!("Meshes: {mesh_stats}");
+    println!("Images: {image_stats}");
+    println!("Materials: {material_stats}");
 }
