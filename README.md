@@ -156,7 +156,7 @@ So far, the following types have built-in support for memory tracking:
   - [ ] `AudioSource`[^1]
 - [ ] Types in `bevy::render`
   - [x] `Mesh`
-  - [ ] `GpuMesh`
+  - [x] `GpuMesh`
   - [x] `Image`
   - [ ] `GpuImage`
   - [ ] `Shader`[^1]
