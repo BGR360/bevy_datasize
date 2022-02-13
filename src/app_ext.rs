@@ -154,8 +154,7 @@ impl RegisterTypesWithEstimator for App {
             RegisterTypes::register_type::<<T as RenderAsset>::PreparedAsset, _, _, _>(
                 render_app,
                 systems::update_stats_for_render_asset::<T, F>,
-                // TODO: find the appropriate stage for this.
-                RenderStage::Render,
+                RenderStage::Queue,
             );
 
             // Also register the type on the main app so there are entries for
