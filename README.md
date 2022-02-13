@@ -20,7 +20,42 @@ See the [`datasize`] docs for more info on that.
 Rustdocs for the main branch can be found
 [here](https://bgr360.github.io/bevy_datasize/bevy_datasize/)
 
-## Example
+## Examples
+
+### Basic Usage
+
+The following example demonstrates how to show the memory usage of all loaded
+`Image`s:
+
+```rust,no_run
+use bevy::prelude::*;
+use bevy_datasize::prelude::*;
+
+fn main() {
+    App::new()
+        .add_plugins(DefaultPlugins)
+        .add_plugin(DefaultMemoryUsagePlugins)
+        .add_system(print_image_usage)
+        .run();
+}
+
+fn print_image_usage(memory_usage: Res<MemoryUsage>) {
+    let MemoryStats {
+        count,
+        total_stack_bytes,
+        total_heap_bytes,
+    } = memory_usage.get_stats::<Image>().unwrap();
+
+    println!("Image count: {count}");
+    println!("Total stack usage: {total_stack_bytes} bytes");
+    println!("Total heap usage: {total_heap_bytes} bytes");
+}
+```
+
+### Custom Data Types
+
+The following example demonstrates how to track memory usage for a custom
+`Component` type when using minimal plugins:
 
 ```rust,no_run
 use bevy::prelude::*;
@@ -36,11 +71,11 @@ fn main() {
         .add_plugins(MinimalPlugins)
         .add_plugin(MemoryUsagePlugin)
         .register_sized_component::<MyComponent>()
-        .add_system(print_datasize)
+        .add_system(print_custom_usage)
         .run();
 }
 
-fn print_datasize(memory_usage: Res<MemoryUsage>) {
+fn print_custom_usage(memory_usage: Res<MemoryUsage>) {
     let MemoryStats {
         count,
         total_stack_bytes,
@@ -52,6 +87,10 @@ fn print_datasize(memory_usage: Res<MemoryUsage>) {
     println!("MyComponent total heap usage: {total_heap_bytes} bytes");
 }
 ```
+
+### More
+
+See the [`examples`](examples/) directory for more examples.
 
 ## License
 

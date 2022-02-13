@@ -4,5 +4,48 @@ version = "0.0.1"
 edition = "2021"
 
 [dependencies]
-bevy = { version = "0.6", default-features = false, features = [] }
+bevy = { version = "0.6", default-features = false }
 datasize = "0.2"
+
+[dev-dependencies]
+maplit = "1"
+
+[features]
+default = [
+    "render"
+]
+
+# Enables support for tracking Bevy render resources.
+render = [
+    "mesh",
+    "image",
+]
+# Enables support for tracking `Mesh`.
+mesh = ["bevy_render"]
+# Enables support for tracking `Image`.
+image = ["bevy_render"]
+
+# Features required to run all the examples
+examples = [
+    "bevy_render_all",
+    "bevy_png",
+    "bevy_winit",
+]
+
+# Forwarded bevy features
+bevy_pbr = ["bevy/bevy_pbr"]
+bevy_png = ["bevy/png"]
+bevy_render_all = ["bevy/render"]
+bevy_render = ["bevy/bevy_render"]
+bevy_winit = ["bevy/bevy_winit"]
+
+[[example]]
+name = "custom_types"
+
+[[example]]
+name = "render_resources"
+required-features = [
+    "bevy_render_all",
+    "bevy_png",
+    "bevy_winit"
+]

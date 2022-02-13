@@ -11,6 +11,16 @@ pub struct MemoryUsage {
 }
 
 impl MemoryUsage {
+    /// Registers the given type with the usage tracker.
+    pub fn register_type<T>(&mut self)
+    where
+        T: Any,
+    {
+        let type_id = TypeId::of::<T>();
+
+        self.datasizes.insert(type_id, Default::default());
+    }
+
     /// Returns the most recent [`MemoryStats`] for the given type.
     ///
     /// Returns `None` if the type has not been registered.
@@ -55,15 +65,5 @@ impl MemoryUsage {
             .expect("Memory usage not tracked for this type. Did you forget to register the type?");
 
         entry.set(stats);
-    }
-
-    /// Registers the given type with the usage tracker.
-    pub fn register_type<T>(&mut self)
-    where
-        T: Any,
-    {
-        let type_id = TypeId::of::<T>();
-
-        self.datasizes.insert(type_id, Default::default());
     }
 }

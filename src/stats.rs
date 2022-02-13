@@ -1,9 +1,10 @@
 use std::{
     any::Any,
+    ops::Add,
     sync::atomic::{AtomicUsize, Ordering},
 };
 
-use crate::{DataSize, DataSizeEstimator};
+use crate::{estimator::ForwardingEstimator, DataSize, DataSizeEstimator};
 
 /// Memory usage statistics for a single data type.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
@@ -40,13 +41,13 @@ impl MemoryStats {
     where
         T: Any + DataSize,
     {
-        Self::from_value_with_estimator::<T, T>(value)
+        Self::from_value_with_estimator(value, &ForwardingEstimator::default())
     }
 
     /// Returns the computed memory statistics for a single value using a
     /// specific [`DataSizeEstimator`].
     #[inline]
-    pub fn from_value_with_estimator<T, E>(value: &T) -> Self
+    pub fn from_value_with_estimator<T, E>(value: &T, estimator: &E) -> Self
     where
         T: Any,
         E: DataSizeEstimator<T>,
@@ -54,7 +55,7 @@ impl MemoryStats {
         Self {
             count: 1,
             total_stack_bytes: Self::stack_size_of(value),
-            total_heap_bytes: Self::heap_size_of_with_estimator::<T, E>(value),
+            total_heap_bytes: Self::heap_size_of_with_estimator(value, estimator),
         }
     }
 
@@ -65,32 +66,24 @@ impl MemoryStats {
         T: Any + DataSize,
         I: IntoIterator<Item = &'a T>,
     {
-        Self::from_values_with_estimator::<T, T, I>(values)
+        Self::from_values_with_estimator(values, &ForwardingEstimator::default())
     }
 
     /// Returns the computed memory statistics for a collection of values.
     #[inline]
-    pub fn from_values_with_estimator<'a, T, E, I>(values: I) -> Self
+    pub fn from_values_with_estimator<'a, T, E, I>(values: I, estimator: &E) -> Self
     where
         T: Any,
         E: DataSizeEstimator<T>,
         I: IntoIterator<Item = &'a T>,
     {
-        let mut count = 0;
-        let mut total_stack_bytes = 0;
-        let mut total_heap_bytes = 0;
+        let mut stats = MemoryStats::default();
 
         for value in values.into_iter() {
-            count += 1;
-            total_stack_bytes += Self::stack_size_of(value);
-            total_heap_bytes += Self::heap_size_of_with_estimator::<T, E>(value);
+            stats = stats + Self::from_value_with_estimator(value, estimator);
         }
 
-        Self {
-            count,
-            total_stack_bytes,
-            total_heap_bytes,
-        }
+        stats
     }
 
     /// Returns the "stack" size of the given value.
@@ -116,17 +109,53 @@ impl MemoryStats {
     where
         T: DataSize,
     {
-        Self::heap_size_of_with_estimator::<T, T>(value)
+        Self::heap_size_of_with_estimator(value, &ForwardingEstimator::default())
     }
 
     /// Returns the estimated heap size of the given value using a specific
     /// [`DataSizeEstimator`].
     #[inline]
-    pub fn heap_size_of_with_estimator<T, E>(value: &T) -> usize
+    pub fn heap_size_of_with_estimator<T, E>(value: &T, estimator: &E) -> usize
     where
         E: DataSizeEstimator<T>,
     {
-        <E as DataSizeEstimator<T>>::estimate_heap_size(value)
+        estimator.estimate_heap_size(value)
+    }
+
+    /// Returns the estimated total size of the given value.
+    ///
+    /// This quantity is the sum of [`stack_size_of`] and [`heap_size_of`].
+    ///
+    /// [`stack_size_of`]: Self::stack_size_of
+    /// [`heap_size_of`]: Self::heap_size_of
+    #[inline]
+    pub fn total_size_of<T>(value: &T) -> usize
+    where
+        T: Any + DataSize,
+    {
+        Self::total_size_of_with_estimator(value, &ForwardingEstimator::default())
+    }
+
+    /// Returns the estimated total size of the given value using a specific
+    /// [`DataSizeEstimator`].
+    pub fn total_size_of_with_estimator<T, E>(value: &T, estimator: &E) -> usize
+    where
+        T: Any,
+        E: DataSizeEstimator<T>,
+    {
+        Self::stack_size_of(value) + Self::heap_size_of_with_estimator(value, estimator)
+    }
+}
+
+impl Add for MemoryStats {
+    type Output = MemoryStats;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self {
+            count: self.count + rhs.count,
+            total_stack_bytes: self.total_stack_bytes + rhs.total_stack_bytes,
+            total_heap_bytes: self.total_heap_bytes + rhs.total_heap_bytes,
+        }
     }
 }
 

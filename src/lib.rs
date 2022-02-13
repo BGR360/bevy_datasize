@@ -1,6 +1,13 @@
-//! This is a library for tracking memory usage in [Bevy](https://lib.rs/bevy) apps.
+//! This is a library for tracking memory usage in [Bevy](https://lib.rs/bevy)
+//! apps.
 //!
-//! It is based on the [`datasize`] crate.
+//! `bevy_datasize` uses the [`DataSize`] trait from the [`datasize`] crate to
+//! estimate the runtime memory usage of any components, resources, or assets
+//! that are registered with the [`MemoryUsagePlugin`].
+//!
+//! The [`DataSize`] trait can be derived for your own custom types, and you can
+//! inject custom estimators for third party types that do not implement
+//! `DataSize`. See the [`datasize`] docs for more info on that.
 //!
 //! # Example
 //!
@@ -34,9 +41,6 @@
 //!     println!("MyComponent total heap usage: {total_heap_bytes} bytes");
 //! }
 //! ```
-//!
-//! See the [`datasize`] docs for more information on the [`DataSize`] trait.
-
 #![warn(missing_docs)]
 
 pub use datasize;
@@ -62,7 +66,8 @@ pub use stats::MemoryStats;
 #[allow(missing_docs)]
 pub mod prelude {
     pub use crate::{
-        DataSize, MemoryConfig, MemoryStats, MemoryUsage, MemoryUsagePlugin, RegisterSizedTypes,
+        builtins::DefaultMemoryUsagePlugins, DataSize, MemoryConfig, MemoryStats, MemoryUsage,
+        MemoryUsagePlugin, RegisterSizedTypes,
     };
 }
 
