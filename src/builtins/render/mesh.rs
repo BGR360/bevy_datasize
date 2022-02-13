@@ -14,7 +14,9 @@ use crate::{
     DataSize, DataSizeEstimator, MemoryConfig, MemoryStats,
 };
 
-/// Adds memory tracking for [`Mesh`] assets.
+/// Adds memory tracking for [`Mesh`] and [`GpuMesh`] assets.
+///
+/// [`GpuMesh`]: bevy::render::mesh::GpuMesh
 #[derive(Default)]
 pub struct MeshMemoryUsagePlugin;
 
@@ -122,17 +124,6 @@ impl DataSizeEstimator<VertexAttributeValues> for VertexAttributeSizeEstimator {
         }
     }
 }
-
-// #[derive(Default)]
-// struct GpuMeshSizeEstimator;
-
-// impl DataSizeEstimator<GpuMesh> for GpuMeshSizeEstimator {
-//     const IS_DYNAMIC: bool = true;
-
-//     fn estimate_heap_size(&self, _value: &GpuMesh) -> usize {
-//         1
-//     }
-// }
 
 /***************************************************************************************************
 
