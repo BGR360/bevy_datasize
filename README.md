@@ -34,7 +34,7 @@ use bevy_datasize::prelude::*;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_plugin(DefaultMemoryUsagePlugins)
+        .add_plugins(DefaultMemoryUsagePlugins)
         .add_system(print_image_usage)
         .run();
 }
