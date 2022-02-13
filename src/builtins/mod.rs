@@ -1,14 +1,8 @@
 //! Support for Bevy's built-in types.
 
-use std::any::Any;
+use bevy::app::{PluginGroup, PluginGroupBuilder};
 
-use bevy::{
-    app::{App, PluginGroup, PluginGroupBuilder},
-    asset::Asset,
-    ecs::{component::Component, system::Resource},
-};
-
-use crate::{systems, DataSizeEstimator, MemoryUsagePlugin, RegisterSizedTypes};
+use crate::MemoryUsagePlugin;
 
 pub mod render;
 pub mod transform;
@@ -32,31 +26,3 @@ impl PluginGroup for DefaultMemoryUsagePlugins {
         group.add(TransformMemoryUsagePlugin);
     }
 }
-
-pub(crate) trait RegisterTypesWithEstimator: RegisterSizedTypes {
-    fn register_component_with_estimator<T, E>(&mut self) -> &mut Self
-    where
-        T: Any + Component,
-        E: DataSizeEstimator<T> + Default + 'static,
-    {
-        self.register_sized_type::<T, _, _>(systems::update_stats_for_component::<T, E>)
-    }
-
-    fn register_resource_with_estimator<T, E>(&mut self) -> &mut Self
-    where
-        T: Any + Resource,
-        E: DataSizeEstimator<T> + Default + 'static,
-    {
-        self.register_sized_type::<T, _, _>(systems::update_stats_for_resource::<T, E>)
-    }
-
-    fn register_asset_with_estimator<T, E>(&mut self) -> &mut Self
-    where
-        T: Any + Asset,
-        E: DataSizeEstimator<T> + Default + 'static,
-    {
-        self.register_sized_type::<T, _, _>(systems::update_stats_for_asset::<T, E>)
-    }
-}
-
-impl RegisterTypesWithEstimator for App {}

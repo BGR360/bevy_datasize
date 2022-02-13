@@ -4,43 +4,49 @@
 
 use bevy::{
     app::Plugin,
-    asset::Assets,
-    ecs::system::Res,
     render::mesh::{Mesh, VertexAttributeValues},
     utils::HashSet,
 };
 
 use crate::{
-    systems, DataSize, DataSizeEstimator, MemoryConfig, MemoryStats, MemoryUsage,
-    RegisterSizedTypes,
+    app_ext::RegisterTypesWithEstimator,
+    estimator::{FromConfig, ZeroEstimator},
+    DataSize, DataSizeEstimator, MemoryConfig, MemoryStats,
 };
 
 /// Adds memory tracking for [`Mesh`] assets.
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct MeshMemoryUsagePlugin;
 
 impl Plugin for MeshMemoryUsagePlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.register_sized_type::<Mesh, _, _>(update_stats_for_meshes);
+        // GpuMesh does not appear to have any heap storage.
+        app.register_render_asset_with_estimator::<Mesh, MeshSizeEstimator, ZeroEstimator>();
     }
 }
 
-#[derive(Debug)]
-struct MeshSizeEstimator<'a> {
-    additional_vertex_attributes: &'a [&'static str],
+struct MeshSizeEstimator {
+    additional_vertex_attributes: Vec<&'static str>,
 }
 
-impl<'a> Default for MeshSizeEstimator<'a> {
-    fn default() -> Self {
-        static NO_ADDITIONAL_ATTRIBUTES: [&str; 0] = [];
-
+impl FromConfig for MeshSizeEstimator {
+    fn from_config(config: &MemoryConfig) -> Self {
         Self {
-            additional_vertex_attributes: &NO_ADDITIONAL_ATTRIBUTES[..],
+            additional_vertex_attributes: Vec::from(&config.additional_mesh_vertex_attributes[..]),
         }
     }
 }
 
-impl<'a> DataSizeEstimator<Mesh> for MeshSizeEstimator<'a> {
+impl MeshSizeEstimator {
+    #[cfg(test)]
+    fn new() -> Self {
+        Self {
+            additional_vertex_attributes: Vec::new(),
+        }
+    }
+}
+
+impl DataSizeEstimator<Mesh> for MeshSizeEstimator {
     const IS_DYNAMIC: bool = true;
 
     /// Sums up the sizes of the mesh's vertex attribute lists.
@@ -63,14 +69,22 @@ impl<'a> DataSizeEstimator<Mesh> for MeshSizeEstimator<'a> {
         let total_size_of_attributes: usize = attributes
             .into_iter()
             .filter_map(|attribute_name| mesh.attribute(attribute_name))
-            .map(|attributes| MemoryStats::total_size_of_with_estimator(attributes, self))
+            .map(|attributes| {
+                MemoryStats::total_size_of_with_estimator(
+                    attributes,
+                    &VertexAttributeSizeEstimator::default(),
+                )
+            })
             .sum();
 
         total_size_of_attributes
     }
 }
 
-impl<'a> DataSizeEstimator<VertexAttributeValues> for MeshSizeEstimator<'a> {
+#[derive(Debug, Default)]
+struct VertexAttributeSizeEstimator;
+
+impl DataSizeEstimator<VertexAttributeValues> for VertexAttributeSizeEstimator {
     const IS_DYNAMIC: bool = true;
 
     #[inline]
@@ -109,24 +123,16 @@ impl<'a> DataSizeEstimator<VertexAttributeValues> for MeshSizeEstimator<'a> {
     }
 }
 
-/// This system updates the [`MemoryStats`] for the [`Mesh`] type.
-pub fn update_stats_for_meshes(
-    memory_config: Res<MemoryConfig>,
-    memory_usage: Res<MemoryUsage>,
-    meshes: Res<Assets<Mesh>>,
-) {
-    let additional_vertex_attributes = &memory_config.additional_mesh_vertex_attributes[..];
-    let estimator = MeshSizeEstimator {
-        additional_vertex_attributes,
-    };
+// #[derive(Default)]
+// struct GpuMeshSizeEstimator;
 
-    systems::update_stats::<Mesh, _>(&*memory_config, &*memory_usage, || {
-        MemoryStats::from_values_with_estimator(
-            meshes.iter().map(|(_handle, mesh)| mesh),
-            &estimator,
-        )
-    })
-}
+// impl DataSizeEstimator<GpuMesh> for GpuMeshSizeEstimator {
+//     const IS_DYNAMIC: bool = true;
+
+//     fn estimate_heap_size(&self, _value: &GpuMesh) -> usize {
+//         1
+//     }
+// }
 
 /***************************************************************************************************
 
@@ -171,7 +177,7 @@ mod tests {
             Mesh::ATTRIBUTE_NORMAL => 100,
         });
 
-        let estimator = MeshSizeEstimator::default();
+        let estimator = MeshSizeEstimator::new();
 
         let estimated_heap_size = MemoryStats::heap_size_of_with_estimator(&mesh, &estimator);
         assert_eq!(estimated_heap_size, 200 + ATTRIBUTE_STACK_SIZE * 2);
@@ -186,7 +192,7 @@ mod tests {
             "bar" => 100,
         });
 
-        let estimator = MeshSizeEstimator::default();
+        let estimator = MeshSizeEstimator::new();
 
         let estimated_heap_size = MemoryStats::heap_size_of_with_estimator(&mesh, &estimator);
         assert_eq!(estimated_heap_size, 200 + ATTRIBUTE_STACK_SIZE * 2);
@@ -202,7 +208,7 @@ mod tests {
         });
 
         let estimator = MeshSizeEstimator {
-            additional_vertex_attributes: &["foo", "bar"],
+            additional_vertex_attributes: vec!["foo", "bar"],
         };
 
         let estimated_heap_size = MemoryStats::heap_size_of_with_estimator(&mesh, &estimator);
@@ -217,7 +223,7 @@ mod tests {
         });
 
         let estimator = MeshSizeEstimator {
-            additional_vertex_attributes: &[Mesh::ATTRIBUTE_POSITION],
+            additional_vertex_attributes: vec![Mesh::ATTRIBUTE_POSITION],
         };
 
         let estimated_size = MemoryStats::total_size_of_with_estimator(&mesh, &estimator);

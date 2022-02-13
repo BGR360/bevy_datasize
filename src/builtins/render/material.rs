@@ -1,7 +1,7 @@
 //! Memory usage tracking for Bevy's [`Image`] type.
 use bevy::{app::Plugin, pbr::StandardMaterial};
 
-use crate::{builtins::RegisterTypesWithEstimator, estimator::ZeroEstimator};
+use crate::{app_ext::RegisterTypesWithEstimator, estimator::ZeroEstimator};
 
 /// Adds memory tracking for [`StandardMaterial`] assets.
 #[derive(Debug, Default)]

@@ -1,13 +1,17 @@
-use std::any::{Any, TypeId};
+use std::{
+    any::{Any, TypeId},
+    sync::Arc,
+};
 
 use bevy::utils::HashMap;
+use parking_lot::RwLock;
 
 use crate::stats::{MemoryStats, MemoryStatsInternal};
 
 /// Stores memory usage statistics for registered data types.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct MemoryUsage {
-    pub(crate) datasizes: HashMap<TypeId, MemoryStatsInternal>,
+    inner: Arc<RwLock<MemoryUsageInner>>,
 }
 
 impl MemoryUsage {
@@ -18,7 +22,10 @@ impl MemoryUsage {
     {
         let type_id = TypeId::of::<T>();
 
-        self.datasizes.insert(type_id, Default::default());
+        self.inner
+            .write()
+            .datasizes
+            .insert(type_id, Default::default());
     }
 
     /// Returns the most recent [`MemoryStats`] for the given type.
@@ -30,7 +37,11 @@ impl MemoryUsage {
     {
         let type_id = TypeId::of::<T>();
 
-        self.datasizes.get(&type_id).map(MemoryStatsInternal::get)
+        self.inner
+            .read()
+            .datasizes
+            .get(&type_id)
+            .map(MemoryStatsInternal::get)
     }
 
     /// Updates the [`MemoryStats`] for the given type.
@@ -40,7 +51,9 @@ impl MemoryUsage {
     {
         let type_id = TypeId::of::<T>();
 
-        let entry = self
+        let mut inner = self.inner.write();
+
+        let entry = inner
             .datasizes
             .get_mut(&type_id)
             .expect("Memory usage not tracked for this type. Did you forget to register the type?");
@@ -59,11 +72,18 @@ impl MemoryUsage {
     {
         let type_id = TypeId::of::<T>();
 
-        let entry = self
+        let inner = self.inner.read();
+
+        let entry = inner
             .datasizes
             .get(&type_id)
             .expect("Memory usage not tracked for this type. Did you forget to register the type?");
 
         entry.set(stats);
     }
+}
+
+#[derive(Debug, Default)]
+struct MemoryUsageInner {
+    datasizes: HashMap<TypeId, MemoryStatsInternal>,
 }

@@ -10,7 +10,10 @@ use bevy::{
     },
 };
 
-use crate::{DataSizeEstimator, MemoryConfig, MemoryStats, MemoryUsage};
+#[cfg(feature = "bevy_render")]
+use bevy::render::render_asset::{RenderAsset, RenderAssets};
+
+use crate::{estimator::FromConfig, DataSizeEstimator, MemoryConfig, MemoryStats, MemoryUsage};
 
 // TODO: change detection!
 // TODO: tracing scopes!
@@ -23,10 +26,10 @@ pub fn update_stats_for_component<T, E>(
     memory_usage: Res<MemoryUsage>,
 ) where
     T: Any + Component,
-    E: DataSizeEstimator<T> + Default,
+    E: DataSizeEstimator<T> + FromConfig,
 {
     update_stats::<T, _>(&*memory_config, &*memory_usage, || {
-        MemoryStats::from_values_with_estimator(query.iter(), &E::default())
+        MemoryStats::from_values_with_estimator(query.iter(), &E::from_config(&*memory_config))
     });
 }
 
@@ -38,10 +41,10 @@ pub fn update_stats_for_resource<T, E>(
     memory_usage: Res<MemoryUsage>,
 ) where
     T: Any + Resource,
-    E: DataSizeEstimator<T> + Default,
+    E: DataSizeEstimator<T> + FromConfig,
 {
     update_stats::<T, _>(&*memory_config, &*memory_usage, || {
-        MemoryStats::from_value_with_estimator(&*resource, &E::default())
+        MemoryStats::from_value_with_estimator(&*resource, &E::from_config(&*memory_config))
     });
 }
 
@@ -53,12 +56,34 @@ pub fn update_stats_for_asset<T, E>(
     memory_usage: Res<MemoryUsage>,
 ) where
     T: Any + Asset,
-    E: DataSizeEstimator<T> + Default,
+    E: DataSizeEstimator<T> + FromConfig,
 {
     update_stats::<T, _>(&*memory_config, &*memory_usage, || {
         MemoryStats::from_values_with_estimator(
             assets.iter().map(|(_handle, asset)| asset),
-            &E::default(),
+            &E::from_config(&*memory_config),
+        )
+    });
+}
+
+/// This system updates the [`MemoryStats`] for the given render asset type `T`
+/// using the given [`DataSizeEstimator`].
+///
+/// This should be added to the render sub-app.
+#[cfg(feature = "bevy_render")]
+pub fn update_stats_for_render_asset<T, E>(
+    render_assets: Res<RenderAssets<T>>,
+    memory_config: Res<MemoryConfig>,
+    memory_usage: Res<MemoryUsage>,
+) where
+    T: RenderAsset,
+    <T as RenderAsset>::PreparedAsset: Any,
+    E: DataSizeEstimator<<T as RenderAsset>::PreparedAsset> + FromConfig,
+{
+    update_stats::<<T as RenderAsset>::PreparedAsset, _>(&*memory_config, &*memory_usage, || {
+        MemoryStats::from_values_with_estimator(
+            render_assets.iter().map(|(_handle, asset)| asset),
+            &E::from_config(&*memory_config),
         )
     });
 }

@@ -1,5 +1,5 @@
 /// Configuration for the [`MemoryUsagePlugin`][crate::MemoryUsagePlugin].
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MemoryConfig {
     /// Whether to track memory usage for all registered types.
     pub global: bool,

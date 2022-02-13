@@ -6,7 +6,7 @@ use bevy::{
 };
 
 use crate::{
-    builtins::RegisterTypesWithEstimator,
+    app_ext::RegisterTypesWithEstimator,
     estimator::{SliceEstimator, ZeroEstimator},
     DataSizeEstimator,
 };

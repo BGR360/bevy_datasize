@@ -3,7 +3,10 @@
 //!
 //! Adapted from the official Bevy `many_cubes` example.
 
-use bevy::prelude::*;
+use bevy::{
+    prelude::*,
+    render::{mesh::GpuMesh, texture::GpuImage},
+};
 use bevy_datasize::prelude::*;
 
 fn main() {
@@ -48,12 +51,14 @@ fn setup(
 
 fn print_sizes(memory_usage: Res<MemoryUsage>) {
     let mesh_stats = memory_usage.get_stats::<Mesh>().unwrap();
+    let gpu_mesh_stats = memory_usage.get_stats::<GpuMesh>().unwrap();
     let image_stats = memory_usage.get_stats::<Image>().unwrap();
     let material_stats = memory_usage.get_stats::<StandardMaterial>().unwrap();
 
     println!();
     println!("Memory usage:");
     println!("Meshes: {mesh_stats}");
+    println!("GPU Meshes: {gpu_mesh_stats}");
     println!("Images: {image_stats}");
     println!("Materials: {material_stats}");
 }

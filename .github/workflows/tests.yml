@@ -1,3 +1,5 @@
+# TODO: build with all combinations of features.
+
 name: tests
 
 on:

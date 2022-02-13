@@ -1,6 +1,6 @@
 //! Heap size estimators.
 
-use crate::DataSize;
+use crate::{DataSize, MemoryConfig};
 
 /// Indicates that a type can estimate the heap usage of values of type `T`.
 ///
@@ -20,7 +20,7 @@ pub trait DataSizeEstimator<T: ?Sized> {
 
 /// A [`DataSizeEstimator`] that simply forwards to a type's implementation of
 /// [`DataSize`].
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct ForwardingEstimator;
 
 impl<T: DataSize> DataSizeEstimator<T> for ForwardingEstimator {
@@ -33,7 +33,7 @@ impl<T: DataSize> DataSizeEstimator<T> for ForwardingEstimator {
 }
 
 /// A [`DataSizeEstimator`] that simply returns `0`.
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct ZeroEstimator;
 
 impl<T> DataSizeEstimator<T> for ZeroEstimator {
@@ -47,7 +47,7 @@ impl<T> DataSizeEstimator<T> for ZeroEstimator {
 
 /// A [`DataSizeEstimator`] that multiplies a type's stack size by the length of
 /// a slice.
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct SliceEstimator;
 
 impl<T> DataSizeEstimator<[T]> for SliceEstimator {
@@ -56,5 +56,17 @@ impl<T> DataSizeEstimator<[T]> for SliceEstimator {
     #[inline]
     fn estimate_heap_size(&self, value: &[T]) -> usize {
         std::mem::size_of::<T>() * value.len()
+    }
+}
+
+/// Creates `Self` using data from the given [`MemoryConfig`].
+pub trait FromConfig {
+    /// Creates `Self` using data from the given [`MemoryConfig`].
+    fn from_config(config: &MemoryConfig) -> Self;
+}
+
+impl<T: Default> FromConfig for T {
+    fn from_config(_config: &MemoryConfig) -> T {
+        Default::default()
     }
 }

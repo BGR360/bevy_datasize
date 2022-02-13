@@ -10,6 +10,31 @@ use bytesize::ByteSize;
 use crate::{estimator::ForwardingEstimator, DataSize, DataSizeEstimator};
 
 /// Memory usage statistics for a single data type.
+///
+/// # Example
+///
+/// ```
+/// # use bevy_datasize::prelude::*;
+/// #[derive(DataSize)]
+/// struct SomeData {
+///     data: Vec<u8>,
+/// }
+///
+/// assert_eq!(std::mem::size_of::<SomeData>(), 24);
+///
+/// let values = vec![
+///     SomeData { data: vec![0; 100] },
+///     SomeData { data: vec![0; 100] },
+/// ];
+///
+/// let stats = MemoryStats::from_values(values.iter());
+///
+/// assert_eq!(stats.count, 2);
+/// assert_eq!(stats.total_stack_bytes, 48);
+/// assert_eq!(stats.total_heap_bytes, 200);
+/// assert_eq!(stats.total_bytes(), 248);
+/// assert_eq!(format!("{stats}"), "2 (248 B)")
+/// ```
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct MemoryStats {
     /// The total number of instances of this data type.
@@ -124,6 +149,8 @@ impl MemoryStats {
     ///
     /// This quantity represents how many bytes the type occupies apart from the
     /// immediate bytes of its fields.
+    ///
+    /// This quantity is **estimated** and may not be 100% accurate for all types.
     #[inline]
     pub fn heap_size_of<T>(value: &T) -> usize
     where
