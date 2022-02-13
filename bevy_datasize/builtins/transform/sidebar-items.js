@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["TransformMemoryUsagePlugin","Adds memory tracking for the components that are part of Bevy’s [`TransformPlugin`][bevy::transform::TransformPlugin]."]]});

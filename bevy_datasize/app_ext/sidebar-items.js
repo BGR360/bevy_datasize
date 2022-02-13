@@ -1,0 +1,1 @@
+initSidebarItems({"trait":[["RegisterSizedTypes","[`App`] extension methods to register [`DataSize`] types for memory usage tracking."],["RegisterTypes","The lowest-level interface for registering types for memory usage tracking."],["RegisterTypesWithEstimator","[`App`] extension methods to register non-[`DataSize`] types for memory usage tracking."]]});

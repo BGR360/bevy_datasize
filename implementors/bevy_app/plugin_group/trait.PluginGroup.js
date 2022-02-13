@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["bevy_datasize"] = [{"text":"impl PluginGroup for <a class=\"struct\" href=\"bevy_datasize/builtins/struct.DefaultMemoryUsagePlugins.html\" title=\"struct bevy_datasize::builtins::DefaultMemoryUsagePlugins\">DefaultMemoryUsagePlugins</a>","synthetic":false,"types":["bevy_datasize::builtins::DefaultMemoryUsagePlugins"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["render","Support for Bevy render resources."],["transform","Support for types in [`bevy::transform`]."]],"struct":[["DefaultMemoryUsagePlugins","Adds memory tracking for the components, resources, and assets that are part of Bevy’s [`DefaultPlugins`][bevy::prelude::DefaultPlugins]."]]});

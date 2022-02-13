@@ -1,0 +1,156 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Heap data estimator."><meta name="keywords" content="rust, rustlang, rust-lang, datasize"><title>datasize - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu.css" disabled ><script id="default-settings" ></script><script src="../storage.js"></script><script src="../crates.js"></script><script defer src="../main.js"></script>
+    <noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../favicon.svg"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../datasize/index.html'><div class='logo-container rust-logo'><img src='../rust-logo.png' alt='logo'></div></a><h2 class="location">Crate datasize</h2><div class="block version"><div class="narrow-helper"></div><p>Version 0.2.10</p></div><div class="sidebar-elems"><a id="all-types" href="all.html"><p>See all datasize's items</p></a><div class="block items"><ul><li><a href="#macros">Macros</a></li><li><a href="#traits">Traits</a></li><li><a href="#functions">Functions</a></li></ul></div><div id="sidebar-vars" data-name="datasize" data-ty="mod" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../wheel.svg"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Crate <a class="mod" href="#">datasize</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../clipboard.svg" width="19" height="18" alt="Copy item path"></button></span><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../src/datasize/lib.rs.html#1-636" title="goto source code">[src]</a></span></h1><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Heap data estimator.</p>
+<p>The <code>datasize</code> crate allows estimating the amount of heap memory used by a value. It does so by
+providing or deriving an implementation of the <code>DataSize</code> trait, which knows how to calculate
+the size for many <code>std</code> types and primitives.</p>
+<p>The aim is to get a reasonable approximation of memory usage, especially with variably sized
+types like <code>Vec</code>s. While it is acceptable to be a few bytes off in some cases, any user should
+be able to easily tell whether their memory is growing linearly or logarithmically by glancing
+at the reported numbers.</p>
+<p>The crate does not take alignment or memory layouts into account, or unusual behavior or
+optimizations of allocators. It is depending entirely on the data inside the type, thus the name
+of the crate.</p>
+<h2 id="general-usage" class="section-header"><a href="#general-usage">General usage</a></h2>
+<p>For any type that implements <code>DataSize</code>, the <code>data_size</code> convenience function can be used to
+guess the size of its heap allocation:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use</span> <span class="ident">datasize::data_size</span>;
+
+<span class="kw">let</span> <span class="ident">data</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>];
+<span class="macro">assert_eq!</span>(<span class="ident">data_size</span>(<span class="kw-2">&amp;</span><span class="ident">data</span>), <span class="number">24</span>);</code></pre></div>
+<p>Types implementing the trait also provide two additional constants, <code>IS_DYNAMIC</code> and
+<code>STATIC_HEAP_SIZE</code>.</p>
+<p><code>IS_DYNAMIC</code> indicates whether a value’s size can change over time:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use</span> <span class="ident">datasize::DataSize</span>;
+
+<span class="comment">// A `Vec` of any kind may have elements added or removed, so it changes size.</span>
+<span class="macro">assert!</span>(<span class="ident">Vec</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span><span class="ident">::IS_DYNAMIC</span>);
+
+<span class="comment">// The elements of type `u64` in it are not dynamic. This allows the implementation to</span>
+<span class="comment">// simply estimate the size as number_of_elements * size_of::&lt;u64&gt;.</span>
+<span class="macro">assert!</span>(<span class="op">!</span><span class="ident">u64::IS_DYNAMIC</span>);</code></pre></div>
+<p>Additionally, <code>STATIC_HEAP_SIZE</code> indicates the amount of heap memory a type will always use. A
+good example is a <code>Box&lt;u64&gt;</code> – it will always use 8 bytes of heap memory, but not change in
+size:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use</span> <span class="ident">datasize::DataSize</span>;
+
+<span class="macro">assert_eq!</span>(<span class="ident">Box</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span><span class="ident">::STATIC_HEAP_SIZE</span>, <span class="number">8</span>);
+<span class="macro">assert!</span>(<span class="op">!</span><span class="ident">Box</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span><span class="ident">::IS_DYNAMIC</span>);</code></pre></div>
+<h2 id="overriding-derived-data-size-calculation-for-single-fields" class="section-header"><a href="#overriding-derived-data-size-calculation-for-single-fields">Overriding derived data size calculation for single fields.</a></h2>
+<p>On structs (but not enums!) the calculation for heap size can be overriden for single fields,
+which is useful when dealing with third-party crates whose fields do not implement <code>DataSize</code> by
+simply annotating it with <code>#[data_size(with = ...)]</code> and pointing to a <code>Fn(T) -&gt; usize</code>
+function:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use</span> <span class="ident">datasize::DataSize</span>;
+
+<span class="comment">// Let&#39;s pretend this type is from a foreign crate.</span>
+<span class="kw">struct</span> <span class="ident">ThirdPartyType</span>;
+
+<span class="kw">fn</span> <span class="ident">estimate_third_party_type</span>(<span class="ident">value</span>: <span class="kw-2">&amp;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ThirdPartyType</span><span class="op">&gt;</span>) -&gt; <span class="ident">usize</span> {
+    <span class="comment">// We assume every item is 512 bytes in heap size.</span>
+    <span class="ident">value</span>.<span class="ident">len</span>() <span class="op">*</span> <span class="number">512</span>
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">DataSize</span>)]</span>
+<span class="kw">struct</span> <span class="ident">MyStruct</span> {
+    <span class="ident">items</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span>,
+    <span class="attribute">#[<span class="ident">data_size</span>(<span class="ident">with</span> <span class="op">=</span> <span class="ident">estimate_third_party_type</span>)]</span>
+    <span class="ident">other_stuff</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ThirdPartyType</span><span class="op">&gt;</span>,
+}</code></pre></div>
+<p>This automatically marks the whole struct as always dynamic, so the custom estimation function
+is called every time <code>MyStruct</code> is sized.</p>
+<h2 id="implementing-datasize-for-custom-types" class="section-header"><a href="#implementing-datasize-for-custom-types">Implementing <code>DataSize</code> for custom types</a></h2>
+<p>The <code>DataSize</code> trait can be implemented for custom types manually:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">struct</span> <span class="ident">MyType</span> {
+    <span class="ident">items</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">i64</span><span class="op">&gt;</span>,
+    <span class="ident">flag</span>: <span class="ident">bool</span>,
+    <span class="ident">counter</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
+}
+
+<span class="kw">impl</span> <span class="ident">DataSize</span> <span class="kw">for</span> <span class="ident">MyType</span> {
+    <span class="comment">// `MyType` contains a `Vec`, so `IS_DYNAMIC` is set to true.</span>
+    <span class="kw">const</span> <span class="ident">IS_DYNAMIC</span>: <span class="ident">bool</span> <span class="op">=</span> <span class="bool-val">true</span>;
+
+    <span class="comment">// The only always present heap item is the `counter` value, which is 8 bytes.</span>
+    <span class="kw">const</span> <span class="ident">STATIC_HEAP_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">8</span>;
+
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">fn</span> <span class="ident">estimate_heap_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
+        <span class="comment">// We can be lazy here and delegate to all the existing implementations:</span>
+        <span class="ident">data_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">items</span>) <span class="op">+</span> <span class="ident">data_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">flag</span>) <span class="op">+</span> <span class="ident">data_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">counter</span>)
+    }
+}
+
+<span class="kw">let</span> <span class="ident">my_data</span> <span class="op">=</span> <span class="ident">MyType</span> {
+    <span class="ident">items</span>: <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>],
+    <span class="ident">flag</span>: <span class="bool-val">true</span>,
+    <span class="ident">counter</span>: <span class="ident">Box::new</span>(<span class="number">42</span>),
+};
+
+<span class="comment">// Three i64 and one u64 on the heap sum up to 32 bytes:</span>
+<span class="macro">assert_eq!</span>(<span class="ident">data_size</span>(<span class="kw-2">&amp;</span><span class="ident">my_data</span>), <span class="number">32</span>);</code></pre></div>
+<p>Since implementing this for <code>struct</code> types is cumbersome and repetitive, the crate provides a
+<code>DataSize</code> macro for convenience:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// Equivalent to the manual implementation above:</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">DataSize</span>)]</span>
+<span class="kw">struct</span> <span class="ident">MyType</span> {
+    <span class="ident">items</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">i64</span><span class="op">&gt;</span>,
+    <span class="ident">flag</span>: <span class="ident">bool</span>,
+    <span class="ident">counter</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
+}</code></pre></div>
+<p>See the <code>DataSize</code> macro documentation in the <code>datasize_derive</code> crate for details.</p>
+<h3 id="performance-considerations" class="section-header"><a href="#performance-considerations">Performance considerations</a></h3>
+<p>Determining the full size of data can be quite expensive, especially if multiple nested levels
+of dynamic types are used. The crate uses <code>IS_DYNAMIC</code> and <code>STATIC_HEAP_SIZE</code> to optimize when
+it can, so in many cases not every element of a vector needs to be checked individually.</p>
+<p>However, if the contained types are dynamic, every element must (and will) be checked, so keep
+this in mind when performance is an issue.</p>
+<h3 id="handlings-references-arcs-and-similar-types" class="section-header"><a href="#handlings-references-arcs-and-similar-types">Handlings references, <code>Arc</code>s and similar types</a></h3>
+<p>Any reference will be counted as having a data size of 0, as it does not own the value. There
+are some special reference-like types like <code>Arc</code>, which are discussed below.</p>
+<h4 id="arc-and-rc" class="section-header"><a href="#arc-and-rc"><code>Arc</code> and <code>Rc</code></a></h4>
+<p>Currently <code>Arc</code>s are not supported. A planned development is to allow users to mark an instance
+of an <code>Arc</code> as “primary” and have its heap memory usage counted, but currently this is not
+implemented.</p>
+<p>Any <code>Arc</code> will be estimated to have a heap size of <code>0</code>, to avoid cycles resulting in infinite
+loops.</p>
+<p>The <code>Rc</code> type is handled in the same manner.</p>
+<h3 id="additional-types" class="section-header"><a href="#additional-types">Additional types</a></h3>
+<p>Some additional types from external crates are available behind feature flags.</p>
+<ul>
+<li><code>fake_clock-types</code>: Support for the <code>fake_instant::FakeClock</code> type.</li>
+<li><code>futures-types</code>: Some types from the <code>futures</code> crate.</li>
+<li><code>smallvec-types</code>: Support for the <code>smallvec::SmallVec</code> type.</li>
+<li><code>tokio-types</code>: Some types from the <code>tokio</code> crate.</li>
+</ul>
+<h3 id="no_std-support" class="section-header"><a href="#no_std-support"><code>no_std</code> support</a></h3>
+<p>Although slightly paradoxical due to the fact that without <code>std</code> or at least <code>alloc</code> there won’t
+be any heap in most cases, the crate supports a <code>no_std</code> environment. Disabling the “std”
+feature (by disabling default features) will produce a version of the crate that does not rely
+on the standard library. This can be used to derive the <code>DataSize</code> trait for types without
+boilerplate, even though their heap size will usually be 0.</p>
+<h3 id="known-issues" class="section-header"><a href="#known-issues">Known issues</a></h3>
+<p>The derive macro currently does not support generic structs with inline type bounds, e.g.</p>
+
+<div class='information'><div class='tooltip ignore'>ⓘ</div></div><div class="example-wrap"><pre class="rust rust-example-rendered ignore"><code><span class="kw">struct</span> <span class="ident">Foo</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Copy</span><span class="op">&gt;</span> { ... }</code></pre></div>
+<p>This can be worked around by using an equivalent <code>where</code> clause:</p>
+
+<div class='information'><div class='tooltip ignore'>ⓘ</div></div><div class="example-wrap"><pre class="rust rust-example-rendered ignore"><code><span class="kw">struct</span> <span class="ident">Foo</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>
+<span class="kw">where</span> <span class="ident">T</span>: <span class="ident">Copy</span>
+{ ... }</code></pre></div>
+</div></details><h2 id="macros" class="small-section-header"><a href="#macros">Macros</a></h2>
+<div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="macro" href="macro.non_dynamic_const_heap_size.html" title="datasize::non_dynamic_const_heap_size macro">non_dynamic_const_heap_size</a></div><div class="item-right docblock-short"><p>Helper macro to define a heap size for one or more non-dynamic types.</p>
+</div></div></div><h2 id="traits" class="small-section-header"><a href="#traits">Traits</a></h2>
+<div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="trait" href="trait.DataSize.html" title="datasize::DataSize trait">DataSize</a></div><div class="item-right docblock-short"><p>Indicates that a type knows how to approximate its memory usage.</p>
+</div></div></div><h2 id="functions" class="small-section-header"><a href="#functions">Functions</a></h2>
+<div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="fn" href="fn.data_size.html" title="datasize::data_size fn">data_size</a></div><div class="item-right docblock-short"><p>Estimates allocated heap data from data of value.</p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="fn" href="fn.min.html" title="datasize::min fn">min</a></div><div class="item-right docblock-short"><p>A <code>const fn</code> variant of the <code>min</code> function.</p>
+</div></div></div><h2 id="derives" class="small-section-header"><a href="#derives">Derive Macros</a></h2>
+<div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="derive" href="derive.DataSize.html" title="datasize::DataSize derive">DataSize</a></div><div class="item-right docblock-short"><p>Automatically derive the <code>DataSize</code> trait for a type.</p>
+</div></div></div></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="datasize" data-search-index-js="../search-index.js" data-search-js="../search.js"></div>
+</body></html>
