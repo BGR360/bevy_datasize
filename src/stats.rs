@@ -1,6 +1,6 @@
 use std::{
     any::Any,
-    ops::Add,
+    ops::{Add, Mul},
     sync::atomic::{AtomicUsize, Ordering},
 };
 
@@ -52,10 +52,14 @@ impl MemoryStats {
         T: Any,
         E: DataSizeEstimator<T>,
     {
-        Self {
-            count: 1,
-            total_stack_bytes: Self::stack_size_of(value),
-            total_heap_bytes: Self::heap_size_of_with_estimator(value, estimator),
+        if <E as DataSizeEstimator<T>>::IS_DYNAMIC {
+            Self {
+                count: 1,
+                total_stack_bytes: Self::stack_size_of(value),
+                total_heap_bytes: Self::heap_size_of_with_estimator(value, estimator),
+            }
+        } else {
+            Self::from_noheap_type::<T>()
         }
     }
 
@@ -77,13 +81,26 @@ impl MemoryStats {
         E: DataSizeEstimator<T>,
         I: IntoIterator<Item = &'a T>,
     {
-        let mut stats = MemoryStats::default();
+        if <E as DataSizeEstimator<T>>::IS_DYNAMIC {
+            let mut stats = MemoryStats::default();
 
-        for value in values.into_iter() {
-            stats = stats + Self::from_value_with_estimator(value, estimator);
+            for value in values.into_iter() {
+                stats = stats + Self::from_value_with_estimator(value, estimator);
+            }
+
+            stats
+        } else {
+            Self::from_noheap_type::<T>() * values.into_iter().count()
         }
+    }
 
-        stats
+    #[inline]
+    fn from_noheap_type<T>() -> Self {
+        Self {
+            count: 1,
+            total_stack_bytes: std::mem::size_of::<T>(),
+            total_heap_bytes: 0,
+        }
     }
 
     /// Returns the "stack" size of the given value.
@@ -150,11 +167,25 @@ impl MemoryStats {
 impl Add for MemoryStats {
     type Output = MemoryStats;
 
+    #[inline]
     fn add(self, rhs: Self) -> Self::Output {
         Self {
             count: self.count + rhs.count,
             total_stack_bytes: self.total_stack_bytes + rhs.total_stack_bytes,
             total_heap_bytes: self.total_heap_bytes + rhs.total_heap_bytes,
+        }
+    }
+}
+
+impl Mul<usize> for MemoryStats {
+    type Output = MemoryStats;
+
+    #[inline]
+    fn mul(self, rhs: usize) -> Self::Output {
+        Self {
+            count: self.count * rhs,
+            total_stack_bytes: self.total_stack_bytes * rhs,
+            total_heap_bytes: self.total_heap_bytes * rhs,
         }
     }
 }

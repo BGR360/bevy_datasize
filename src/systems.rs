@@ -13,6 +13,7 @@ use bevy::{
 use crate::{DataSizeEstimator, MemoryConfig, MemoryStats, MemoryUsage};
 
 // TODO: change detection!
+// TODO: tracing scopes!
 
 /// This system updates the [`MemoryStats`] for the given component type `T`
 /// using the given [`DataSizeEstimator`] type.

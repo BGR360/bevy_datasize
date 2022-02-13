@@ -7,6 +7,10 @@ use crate::DataSize;
 /// This trait exists in order to work around the fact that this crate cannot
 /// add impls of [`DataSize`] to types from the Bevy crate(s).
 pub trait DataSizeEstimator<T: ?Sized> {
+    /// If `true`, the type `T` has a heap size that can vary at runtime,
+    /// depending on the actual value.
+    const IS_DYNAMIC: bool;
+
     /// Estimates the size of heap memory taken up by the given value.
     ///
     /// Does not include data on the stack, which is usually determined using
@@ -20,6 +24,9 @@ pub trait DataSizeEstimator<T: ?Sized> {
 pub struct ForwardingEstimator;
 
 impl<T: DataSize> DataSizeEstimator<T> for ForwardingEstimator {
+    const IS_DYNAMIC: bool = <T as DataSize>::IS_DYNAMIC;
+
+    #[inline]
     fn estimate_heap_size(&self, value: &T) -> usize {
         <T as DataSize>::estimate_heap_size(value)
     }
@@ -30,6 +37,9 @@ impl<T: DataSize> DataSizeEstimator<T> for ForwardingEstimator {
 pub struct ZeroEstimator;
 
 impl<T> DataSizeEstimator<T> for ZeroEstimator {
+    const IS_DYNAMIC: bool = false;
+
+    #[inline(always)]
     fn estimate_heap_size(&self, _value: &T) -> usize {
         0
     }
@@ -41,6 +51,9 @@ impl<T> DataSizeEstimator<T> for ZeroEstimator {
 pub struct SliceEstimator;
 
 impl<T> DataSizeEstimator<[T]> for SliceEstimator {
+    const IS_DYNAMIC: bool = true;
+
+    #[inline]
     fn estimate_heap_size(&self, value: &[T]) -> usize {
         std::mem::size_of::<T>() * value.len()
     }

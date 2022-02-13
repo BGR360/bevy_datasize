@@ -41,6 +41,8 @@ impl<'a> Default for MeshSizeEstimator<'a> {
 }
 
 impl<'a> DataSizeEstimator<Mesh> for MeshSizeEstimator<'a> {
+    const IS_DYNAMIC: bool = true;
+
     /// Sums up the sizes of the mesh's vertex attribute lists.
     fn estimate_heap_size(&self, mesh: &Mesh) -> usize {
         const DEFAULT_ATTRIBUTES: [&str; 7] = [
@@ -69,6 +71,8 @@ impl<'a> DataSizeEstimator<Mesh> for MeshSizeEstimator<'a> {
 }
 
 impl<'a> DataSizeEstimator<VertexAttributeValues> for MeshSizeEstimator<'a> {
+    const IS_DYNAMIC: bool = true;
+
     #[inline]
     fn estimate_heap_size(&self, values: &VertexAttributeValues) -> usize {
         use VertexAttributeValues::*;

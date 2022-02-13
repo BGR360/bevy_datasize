@@ -17,6 +17,8 @@ impl Plugin for ImageMemoryUsagePlugin {
 struct ImageSizeEstimator;
 
 impl DataSizeEstimator<Image> for ImageSizeEstimator {
+    const IS_DYNAMIC: bool = true;
+
     /// Returns the size of the image's data array.
     #[inline]
     fn estimate_heap_size(&self, image: &Image) -> usize {

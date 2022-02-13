@@ -31,6 +31,8 @@ impl Plugin for TransformMemoryUsagePlugin {
 struct ChildrenSizeEstimator;
 
 impl DataSizeEstimator<Children> for ChildrenSizeEstimator {
+    const IS_DYNAMIC: bool = true;
+
     fn estimate_heap_size(&self, value: &Children) -> usize {
         SliceEstimator.estimate_heap_size(&*value)
     }
